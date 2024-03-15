@@ -14,6 +14,10 @@ const dataSchema=new Schema({
     password:{
         type:String,
     },
+    otps:{
+        type:String,
+        default:null,
+    }
 });
 
 exports.DataModel=mongoose.model('User',dataSchema,'User')

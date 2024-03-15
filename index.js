@@ -161,25 +161,24 @@ try{
     })
     Object.assign(em,{email:req.body.email})*/
     const collection = DataModel.collection;        
-    collection.findOne(em, (err, result) => {
+    collection.findOne (em, async(err, result) => {
         if (err) {
             console.error("user not found:", err);            
         } else {                                 
-            let otpt=mail(otp)                
-            db.empDetails.updateOne(
-                {email:em.email},
-                { $set: { otp: otpt}}
-            )
+            await mail(otp)               
+            console.log(otp)                   
+            let otpt=otp.toString()   
+            console.log(otpt)          
+            collection.updateOne(em,{ $set: { otps:otpt}})
             console.log("otp sent successfully:", result); 
+            emp.otps=otpt;
             const currentTime = new Date();        
-            if((currentTime-otptime)>60000)
-            {
-               otpt= mail(otp)
-               db.empDetails.updateOne(
-                {email:em.email},
+            /*if((currentTime-otptime)>120000)
+            {               
+               collection.updateOne(em,
                 { $set: { otp: otpt}}
             )
-            }            
+            } */           
         }
    
      })
@@ -189,12 +188,21 @@ try{
     }
 });
 app.post("/confirmotp",(req,res)=>{
-    try{
-     const collection=DataModel.collection;
-
+    try{    
+        emp.otps=req.body.otps;
+        console.log(emp)
+    const collection=DataModel.collection;        
+        collection.findOne(emp,(err,res)=>{
+            if(err){
+                console.log("something went wrong",err)
+            }
+            else{
+                console.log("correct",res)
+            }
+        })
     }
     catch(e){
-        console.log("n")
+        console.log("not working")
     }
 })
 app.post("/login",async(req,res)=>{
