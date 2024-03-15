@@ -1,0 +1,24 @@
+<html>
+<head>
+  <title>Node.js  MongoDB </title>  
+</head>
+<body>
+  <h1>Submit Form</h1>
+  <form action="/submit" method="post">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name"><br>
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email"><br><br>
+    <label for="email">Contact:</label><br>
+    <input type="number" id="contact" name="contact"><br><br>
+    <label name="password" id ="password" >password</label><br>
+    <input type="password" id="password" name="password"><br>
+    <label name="re-type password" name="re type password">re-type password</label><br>
+    <input type="password" name="retypepassword" id="retypepassword"><br>
+    <h5 id ="errn" style="display:none"><%= name %></h5>
+    <scriot src="pq/index.js"></script>
+      <div id="error-message"></div>
+    <input type="submit" value="Submit"><br> 
+  </form>
+</body>
+</html>
