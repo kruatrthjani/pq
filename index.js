@@ -149,17 +149,13 @@ app.post("/submit", async(req, res) => {
 });
 const emp={}
 //for access to new password
-var otpaccess;
-let verify=false;
-
-
 app.post("/sendotp",async(req,res)=>{
+try{
     let otp = Math.floor(100000+(Math.random()*900000));    
     const em={
     email:req.body.email,
     }
-    emp.email=em.email;
-    const tempem=em.email;
+    emp.email=em.email;    
     /* Object.defineProperty(em,"email",{
         value:req.body.email,
     })
@@ -183,44 +179,24 @@ app.post("/sendotp",async(req,res)=>{
                 {email:em.email},
                 { $set: { otp: otpt}}
             )
-            }
-            verfiy=true;        
+            }            
         }
    
      })
-});
-app.post("/verify",(req,res)=>{
-    if(verify){
-    const otpver={
-        otp:req.body.otpverify,
     }
-    if(otpaccess==otpver.otp){
-        console.log("successfuly verified")
-    }
-    else{
-        console.log("wrong")
-    }
-}
-});
-app.post("/verified",async(req,res)=>{
-    if(verify){
-        const newpassword={
-            password:req.body.password,
-            retypepassword:req.body.retypepassword,   
-        }
-    }
-        if(newpassword.password==newpassword.retypepassword)      
-        {
-        const collection = DataModel.collection;                            
-        await collection.updateOne({email:em.email},
-            {
-            $set:{
-                password:newpassword.password,
-            },
-        $currentDate: { lastUpdated: true }
-        })
+    catch(e){
+        console.log("here is problem",e)
     }
 });
+app.post("/confirmotp",(req,res)=>{
+    try{
+     const collection=DataModel.collection;
+
+    }
+    catch(e){
+        console.log("n")
+    }
+})
 app.post("/login",async(req,res)=>{
     res.render("login.hbs")
 });

@@ -27,7 +27,7 @@ transporter.sendMail(mailOptions, (error, info) => {
 });
 const otptime = new Date();        
 }
-module.exports={mail,otptime}
+module.exports={mail,otpime}
 /*var transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
