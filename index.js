@@ -147,20 +147,17 @@ app.post("/submit", async(req, res) => {
         res.status(500).send("Error saving data");
     }
 });
-const emp={}
-//for access to new password
-app.post("/sendotp",async(req,res)=>{
+app.use((req, res, next) => {
+    req.sharedObject = {}; // Initialize the shared object
+    next(); // Pass control to the next middleware or route handler
+});
+app.post("/sendotp",async(req,res,next)=>{
 try{
-    let otp = Math.floor(100000+(Math.random()*900000));    
-    const em={
-    email:req.body.email,
-    }
-    emp.email=em.email;    
-    /* Object.defineProperty(em,"email",{
-        value:req.body.email,
-    })
-    Object.assign(em,{email:req.body.email})*/
-    const collection = DataModel.collection;        
+    let otp = Math.floor(100000+(Math.random()*900000));   
+    const temp=req.body.email; 
+   req.sharedObject.email=temp; 
+    const collection = DataModel.collection; 
+    const em=req.sharedObject;       
     collection.findOne (em, async(err, result) => {
         if (err) {
             console.error("user not found:", err);            
@@ -177,30 +174,33 @@ try{
             console.log("otp sent successfully:", result);             
             }               
      })
+     next();
     }
     catch(e){
         console.log("here is problem",e)
-    }
+    }    
 });
 
-app.post("/confirmotp",(req,res)=>{
+app.post("/confirmotp",(req,res,next)=>{
     try{    
-        emp.otps=req.body.otps;
-        console.log(emp)
-    const collection=DataModel.collection;        
-        collection.findOne(emp,(err,res)=>{
+        console.log(req.sharedObject)
+        const em=req.sharedObject;
+        console.log(em)
+        const collection=DataModel.collection;        
+        collection.findOne(em,(err,result)=>{
             if(err){
                 console.log("something went wrong",err)
             }
             else{
-                console.log("correct otp",res)
+                console.log("correct otp",result)
                 function deleteotp() {
-                    collection.updateOne(emp,{ $set: { otps:null }})
+                    collection.updateOne(em,{ $set: { otps:null }})
                   }
-                  deleteotp()
-                  delete emp.otps;
+                  deleteotp()                  
+                  
             }
-        })
+        })        
+        next();
     }
     catch(e){
         console.log("not working")
@@ -208,12 +208,13 @@ app.post("/confirmotp",(req,res)=>{
 });  
 app.post("/resendotp",async (req,res)=>{
     let otp = Math.floor(100000+(Math.random()*900000));    
-    const collection = DataModel.collection;            
+    const collection = DataModel.collection;  
+    const em=req.shareObject;
     await mail(otp)               
             console.log(otp)                   
             let otpt=otp.toString()   
             console.log(otpt)          
-            collection.updateOne(emp,{ $set: { otps:otpt}})
+            collection.updateOne(em,{ $set: { otps:otpt}})
             function deleteotp() {
                 collection.updateOne(em,{ $set: { otps:null }})
               }              
