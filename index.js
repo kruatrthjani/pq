@@ -169,24 +169,20 @@ try{
             console.log(otp)                   
             let otpt=otp.toString()   
             console.log(otpt)          
-            collection.updateOne(em,{ $set: { otps:otpt}})
-            console.log("otp sent successfully:", result); 
-            emp.otps=otpt;
-            const currentTime = new Date();        
-            /*if((currentTime-otptime)>120000)
-            {               
-               collection.updateOne(em,
-                { $set: { otp: otpt}}
-            )
-            } */           
-        }
-   
+            collection.updateOne(em,{ $set: { otps:otpt }})
+            function deleteotp() {
+                collection.updateOne(em,{ $set: { otps:null }})
+              }              
+            setTimeout(deleteotp, 120000);
+            console.log("otp sent successfully:", result);             
+            }               
      })
     }
     catch(e){
         console.log("here is problem",e)
     }
 });
+
 app.post("/confirmotp",(req,res)=>{
     try{    
         emp.otps=req.body.otps;
@@ -197,14 +193,34 @@ app.post("/confirmotp",(req,res)=>{
                 console.log("something went wrong",err)
             }
             else{
-                console.log("correct",res)
+                console.log("correct otp",res)
+                function deleteotp() {
+                    collection.updateOne(emp,{ $set: { otps:null }})
+                  }
+                  deleteotp()
+                  delete emp.otps;
             }
         })
     }
     catch(e){
         console.log("not working")
     }
-})
+});  
+app.post("/resendotp",async (req,res)=>{
+    let otp = Math.floor(100000+(Math.random()*900000));    
+    const collection = DataModel.collection;            
+    await mail(otp)               
+            console.log(otp)                   
+            let otpt=otp.toString()   
+            console.log(otpt)          
+            collection.updateOne(emp,{ $set: { otps:otpt}})
+            function deleteotp() {
+                collection.updateOne(em,{ $set: { otps:null }})
+              }              
+            setTimeout(deleteotp, 120000);
+            console.log("otp sent successfully:");             
+});
+
 app.post("/login",async(req,res)=>{
     res.render("login.hbs")
 });
