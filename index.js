@@ -249,7 +249,7 @@ app.post("/resendotp",async (req,res)=>{
                       }              
                     setTimeout(deleteotp, 180000);
                     console.log("otp sent successfully:", result);             
-                    res.sendstatus(200).send("verified")
+                    res.status(200).send("verified")
                     }               
              })     
         }
@@ -267,7 +267,7 @@ try{
     }
     else{
         const data={
-            passowrd:req.body.password,
+            password:req.body.password,
             retypepassword:req.body.retypepassword
         }
         const emails=req.session.user.email;
@@ -291,8 +291,8 @@ try{
                 throw new Error('Invalid password');
             }
             else{
-            collection.updateOne(em,{$set:{password:pass}})            
-            res.sendstatus(200).send("new password setuped")
+            collection.updateOne(em,{$set:{password:pass}});
+            res.status(200).send("new password setuped")
             }
         }   
     }
