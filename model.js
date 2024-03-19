@@ -17,7 +17,7 @@ const dataSchema=new Schema({
     otps:{
         type:String,    
         default: '',
-        index: { expires: 60, unique: true }
+        //index: { expires: 180, unique: true }
         //expiresAt: new Date(Date.now() + 120000),
     }
 });

@@ -2,6 +2,7 @@ const http= require ('http');
 const path=require("path")
 const express=require('express');
 const session = require('express-session');
+const axios = require('axios');
 const hbs=require ("hbs")
 const con=require("./connect.js")
 const { connection, mongoose,db,collection } = require("./connect.js");
@@ -179,10 +180,10 @@ try{
             let otpt=otp.toString()   
             console.log(otpt)          
             collection.updateOne(em,{ $set: { otps:otpt }})
-            /*function deleteotp() {
+            function deleteotp() {
                 collection.updateOne(em,{ $set: { otps:null }})
               }              
-            setTimeout(deleteotp, 120000);*/
+            setTimeout(deleteotp, 180000);
             console.log("otp sent successfully:", result);             
             res.status(200).send("verified")
             }               
@@ -222,6 +223,7 @@ try{
         console.log("not working")
     }
 });  
+
 app.post("/resendotp",async (req,res)=>{
     try{
         let otp = Math.floor(100000+(Math.random()*900000));   
@@ -242,8 +244,12 @@ app.post("/resendotp",async (req,res)=>{
                     let otpt=otp.toString()   
                     console.log(otpt)          
                     collection.updateOne(em,{ $set: { otps:otpt }})                   
+                    function deleteotp() {
+                        collection.updateOne(em,{ $set: { otps:null }})
+                      }              
+                    setTimeout(deleteotp, 180000);
                     console.log("otp sent successfully:", result);             
-                    res.status(200).send("verified")
+                    res.sendstatus(200).send("verified")
                     }               
              })     
         }
@@ -251,7 +257,50 @@ app.post("/resendotp",async (req,res)=>{
             console.log("here is problem",e)
         }    
 });
-
+app.post("/newpassword",async(req,res)=>{
+try{
+    const response = await axios.post('http://localhost:3000/confirmotp');
+    const status = response.status;
+    console.log(status)
+    if(status!=200){
+        res.status(404).send("not verified")
+    }
+    else{
+        const data={
+            passowrd:req.body.password,
+            retypepassword:req.body.retypepassword
+        }
+        const emails=req.session.user.email;
+        if(data.password != data.retypepassword)
+        {
+            res.status(400).send("entered password are different");
+            throw new Error('password are different');
+        }
+        else
+        {
+            delete data.retypepassword;
+            console.log(data)
+            const pass=data.password;
+            const emails=req.session.user.email;
+            const collection=DataModel.collection;
+            const em={
+                email:emails
+            }
+            if (!isStrongPassword(data.password)) { 
+                res.status(400).send("Invalid password");
+                throw new Error('Invalid password');
+            }
+            else{
+            collection.updateOne(em,{$set:{password:pass}})            
+            res.sendstatus(200).send("new password setuped")
+            }
+        }   
+    }
+}
+catch(e){
+    console.log("error is caught",e)
+}
+});
 app.post("/login",async(req,res)=>{
     res.render("login.hbs")
 });
