@@ -1,6 +1,7 @@
 const http= require ('http');
 const path=require("path")
 const express=require('express');
+const session = require('express-session');
 const hbs=require ("hbs")
 const con=require("./connect.js")
 const { connection, mongoose,db,collection } = require("./connect.js");
@@ -58,11 +59,22 @@ catch(e){
 const DataModel = mongoose.model('User', dataSchema,'User');*/
 //module.exports=mongoose.model('User', dataSchema);
 //const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true,
+  }));
+  
+  app.use((req, res, next) => {
+    if (!req.session.user) {
+      req.session.user = {}; 
+    }
+    next();
+  });
+  
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/signup.html');
 });
-
-
      /*   try{
             const passarr=data.password;
             passarr.isLength({ min: 6 })
@@ -147,17 +159,17 @@ app.post("/submit", async(req, res) => {
         res.status(500).send("Error saving data");
     }
 });
-app.use((req, res, next) => {
-    req.sharedObject = {}; // Initialize the shared object
-    next(); // Pass control to the next middleware or route handler
-});
-app.post("/sendotp",async(req,res,next)=>{
+
+app.post("/sendotp",async(req,res)=>{
 try{
     let otp = Math.floor(100000+(Math.random()*900000));   
-    const temp=req.body.email; 
-   req.sharedObject.email=temp; 
-    const collection = DataModel.collection; 
-    const em=req.sharedObject;       
+    const temp=req.body.email;     
+    const collection = DataModel.collection;    
+    req.session.user.email=temp
+    console.log(req.session.user.email=temp)
+    const em={
+        email:temp
+    }
     collection.findOne (em, async(err, result) => {
         if (err) {
             console.error("user not found:", err);            
@@ -167,26 +179,31 @@ try{
             let otpt=otp.toString()   
             console.log(otpt)          
             collection.updateOne(em,{ $set: { otps:otpt }})
-            function deleteotp() {
+            /*function deleteotp() {
                 collection.updateOne(em,{ $set: { otps:null }})
               }              
-            setTimeout(deleteotp, 120000);
+            setTimeout(deleteotp, 120000);*/
             console.log("otp sent successfully:", result);             
+            res.status(200).send("verified")
             }               
-     })
-     next();
+     })     
     }
     catch(e){
         console.log("here is problem",e)
     }    
 });
 
-app.post("/confirmotp",(req,res,next)=>{
-    try{    
-        console.log(req.sharedObject)
-        const em=req.sharedObject;
-        console.log(em)
+app.post("/confirmotp",(req,res)=>{
+try{
         const collection=DataModel.collection;        
+        const otp=req.body.otps;
+        const email=req.session.user.email;
+        console.log(email)
+        const em={
+            email:email,
+            otps:otp
+        }
+        console.log(em)
         collection.findOne(em,(err,result)=>{
             if(err){
                 console.log("something went wrong",err)
@@ -197,29 +214,42 @@ app.post("/confirmotp",(req,res,next)=>{
                     collection.updateOne(em,{ $set: { otps:null }})
                   }
                   deleteotp()                  
-                  
+                  res.status(200).send("verified to new password")
             }
-        })        
-        next();
+        })                
     }
     catch(e){
         console.log("not working")
     }
 });  
 app.post("/resendotp",async (req,res)=>{
-    let otp = Math.floor(100000+(Math.random()*900000));    
-    const collection = DataModel.collection;  
-    const em=req.shareObject;
-    await mail(otp)               
-            console.log(otp)                   
+    try{
+        let otp = Math.floor(100000+(Math.random()*900000));   
+        const collection=DataModel.collection;                
+        const emails=req.session.user.email;
+        console.log(emails)
+            const em={
+                email:emails
+            }     
             let otpt=otp.toString()   
             console.log(otpt)          
-            collection.updateOne(em,{ $set: { otps:otpt}})
-            function deleteotp() {
-                collection.updateOne(em,{ $set: { otps:null }})
-              }              
-            setTimeout(deleteotp, 120000);
-            console.log("otp sent successfully:");             
+            collection.findOne (em, async(err, result) => {
+                if (err) {
+                    console.error("user not found:", err);            
+                } else {                                 
+                    await mail(otp)               
+                    console.log(otp)                   
+                    let otpt=otp.toString()   
+                    console.log(otpt)          
+                    collection.updateOne(em,{ $set: { otps:otpt }})                   
+                    console.log("otp sent successfully:", result);             
+                    res.status(200).send("verified")
+                    }               
+             })     
+        }
+        catch(e){
+            console.log("here is problem",e)
+        }    
 });
 
 app.post("/login",async(req,res)=>{
@@ -248,7 +278,9 @@ app.post("/loginidentify",async(req,res)=>{
         res.status(500).send("Internal Server Error");
     }
 });
-
+app.post('/logout', (req, res) => {
+    req.session.destroy();
+});
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
