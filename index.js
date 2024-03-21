@@ -3,6 +3,8 @@ const path=require("path")
 const express=require('express');
 const session = require('express-session');
 const axios = require('axios');
+const bcrypt = require('bcrypt');
+const {encrypt,decrypt}=require("./passwordcryptography.js")
 const hbs=require ("hbs")
 const con=require("./connect.js")
 const { connection, mongoose,db,collection } = require("./connect.js");
@@ -93,6 +95,7 @@ app.post("/submit", async(req, res) => {
      password:req.body.password,
      retypepassword:req.body.retypepassword,     
     }    
+    let hashed;
      try {                
        /* if (data.password !== data.retypePassword) {              
             res.render(__dirname + "/views/signup", {errname:"Passwords don't match"});    
@@ -139,8 +142,17 @@ app.post("/submit", async(req, res) => {
                     res.status(400).send("Invalid password");
                     throw new Error('Invalid password');
                 }
-        console.log("before save")   
-        //const newData = new DataModel(data);    
+        console.log("before save")             
+        try{
+            let pass=data.password;
+            console.log(pass)
+            let tempo=await encrypt(pass);            
+            data.password=tempo;
+        }
+        catch(e){
+                console.log("error",e)
+        }
+        console.log(data)
         const collection = DataModel.collection;              
         //await newData.save();           
         collection.insertOne(data, (err, result) => {
@@ -175,7 +187,7 @@ try{
         if (err) {
             console.error("user not found:", err);            
         } else {                                 
-            await mail(otp)               
+            await mail(otp,temp)               
             console.log(otp)                   
             let otpt=otp.toString()   
             console.log(otpt)          
@@ -302,25 +314,29 @@ catch(e){
 }
 });
 app.post("/login",async(req,res)=>{
-    res.render("login.hbs")
+
+    const db='ecom'
+    const col='User'
+    
+    console.log(collection)
 });
 //const UserModel = mongoose.model('User', dataSchema);
 app.post("/loginidentify",async(req,res)=>{
+    try{
     const data={
         email:req.body.email,
         password:req.body.password,
-    }
-    try{
-        
-        let attr = await DataModel.findOne({email:data.email});        
-        if (attr) {            
-            if (attr.password === data.password) {
-                res.render("homes");
-            } else {
-                res.send("Wrong password");
-            }
-        } else {            
-            res.send("Wrong details whole");
+    }        
+        const passi=data.password;             
+        delete data.password;        
+        console.log(collection)
+        const user = await DataModel.findOne({ email: data.email })
+        const hash = user.password;
+        console.log("hashed from database=",hash)
+        let found = await decrypt(passi,hash)
+        if(found){
+            console.log("password matched",found)      ;   
+            res.status(200).send("go to home page");
         }
     } catch (error) {        
         console.error("Error retrieving data from MongoDB:", error);

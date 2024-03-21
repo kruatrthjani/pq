@@ -1,7 +1,7 @@
 const express= require('express')
 const nodemailer =require('nodemailer')
 var otptime;
-function mail(otp){
+function mail(otp,temp){
 const transporter = nodemailer.createTransport({
   service: "Gmail",
   host: "smtp.gmail.com",
@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 });
 const mailOptions = {
   from: "pubgsgreat083@gmail.com",
-  to: "janikrutarth73@gmail.com",
+  to: temp,
   subject: `this is otp`,
   text: `this is ${otp}`,
 };
