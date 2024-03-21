@@ -282,6 +282,7 @@ try{
             password:req.body.password,
             retypepassword:req.body.retypepassword
         }
+        
         const emails=req.session.user.email;
         if(data.password != data.retypepassword)
         {
@@ -291,8 +292,7 @@ try{
         else
         {
             delete data.retypepassword;
-            console.log(data)
-            const pass=data.password;
+            console.log(data)            
             const emails=req.session.user.email;
             const collection=DataModel.collection;
             const em={
@@ -303,6 +303,17 @@ try{
                 throw new Error('Invalid password');
             }
             else{
+                let pass;
+                try{
+                    pass=data.password;
+                    console.log(pass)
+                    let tempo=await encrypt(pass);            
+                    pass=tempo
+                }
+                catch(e){
+                        console.log("error",e)
+                }
+                console.log(data)                
             collection.updateOne(em,{$set:{password:pass}});
             res.status(200).send("new password setuped")
             }
@@ -313,13 +324,13 @@ catch(e){
     console.log("error is caught",e)
 }
 });
-app.post("/login",async(req,res)=>{
+/*app.post("/login",async(req,res)=>{
 
     const db='ecom'
     const col='User'
     
     console.log(collection)
-});
+});*/
 //const UserModel = mongoose.model('User', dataSchema);
 app.post("/loginidentify",async(req,res)=>{
     try{
