@@ -22,5 +22,22 @@ const dataSchema=new Schema({
     }
 });
 
+const productSchema = new mongoose.Schema({
+    imageData: {
+        filename: String,
+        contentType: String,
+        data: Buffer,
+      },
+    name: String,
+    price:String,
+    brand:String,
+    discount:Number,
+    discountedprice:Number,
+    description: String,
+  
+  });
+  
+
 exports.DataModel=mongoose.model('User',dataSchema,'User')
+exports.ProductModel=mongoose.model('Product',productSchema,'Product')
 

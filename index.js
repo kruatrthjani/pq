@@ -94,8 +94,7 @@ app.post("/submit", async(req, res) => {
      contact:req.body.contact,
      password:req.body.password,
      retypepassword:req.body.retypepassword,     
-    }    
-    let hashed;
+    }        
      try {                
        /* if (data.password !== data.retypePassword) {              
             res.render(__dirname + "/views/signup", {errname:"Passwords don't match"});    
