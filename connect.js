@@ -1,12 +1,12 @@
 const mongoose= require("mongoose")
-const con=await mongoose.connect('abc', {}); 
 //const connectionstring="mongodb+srv://krutarth:fvueFLGO6rXE3ufE@cluster0.ofq8rqs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";    
 const collection="User";
 const db="ecom"
+
 const productcollection="product"
 const connection=async (con)=>{
 try{
-   
+    const con=await mongoose.connect('abc', {});
    console.log("mongoose connected") 
     //const User=require("./index.js")    
     return con;       

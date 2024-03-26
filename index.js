@@ -176,6 +176,9 @@ app.post("/sendotp",async(req,res)=>{
 try{
     let otp = Math.floor(100000+(Math.random()*900000));   
     const temp=req.body.email;     
+    if(temp.length!==6){
+        res.status(400).send("write proper otp")        
+    }
     const collection = DataModel.collection;    
     req.session.user.email=temp
     console.log(req.session.user.email=temp)
