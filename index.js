@@ -8,7 +8,7 @@ const {encrypt,decrypt}=require("./passwordcryptography.js")
 const hbs=require ("hbs")
 const con=require("./connect.js")
 const { connection, mongoose,db,collection } = require("./connect.js");
-const{DataModel}=require("./model.js")
+const{DataModel,ProductModel}=require("./model.js")
 const isStrongPassword = require('./passwordvalidate.js');
 const {mail,otptime} =require('./Mail.js')
 //const val=require('./passwordvalidate.js')
@@ -176,9 +176,7 @@ app.post("/sendotp",async(req,res)=>{
 try{
     let otp = Math.floor(100000+(Math.random()*900000));   
     const temp=req.body.email;     
-    if(temp.length!==6){
-        res.status(400).send("write proper otp")        
-    }
+
     const collection = DataModel.collection;    
     req.session.user.email=temp
     console.log(req.session.user.email=temp)
@@ -356,6 +354,88 @@ app.post("/loginidentify",async(req,res)=>{
         res.status(500).send("Internal Server Error");
     }
 });
+
+app.post('/search', async (req, res, next) => {
+    let search = req.body.search;
+    req.session.user.search = search;
+
+    try {
+        const results = await ProductModel.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { name: { $regex: new RegExp(search, 'i') } }
+                    ]
+                }
+            }
+        ]);                
+        console.log(results);   
+        if (!results || results.length === 0) {
+            // Handle case where no matching documents are found
+            console.log('No matching documents found');
+            return res.status(404).send('No matching documents found');
+        }
+
+        req.session.user.results = results; // Store the results in the session for later use
+        next();
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+}, async (req, res) => {
+    const results = req.session.user.results;
+
+    const contentType = results[0].imageData.contentType;
+    const imageDataBuffers = results.map(result => result.imageData.data.buffer);
+    const combinedImageData = Buffer.concat(imageDataBuffers);
+    res.set('Content-Type', contentType);
+    res.send(combinedImageData);
+});
+
+/*
+app.post('/search', async (req, res, next) => {
+    let search = req.body.search;
+    req.session.user.search = search;
+
+    try {
+        const results = await ProductModel.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { name: { $regex: new RegExp(search, 'i') } }
+                    ]
+                }
+            }
+        ]);                
+        console.log(results);   
+        if (!results || results.length === 0) {
+            // Handle case where no matching documents are found
+            console.log('No matching documents found');
+            return res.status(404).send('No matching documents found');
+        }
+
+        req.session.user.results = results; // Store the results in the session for later use
+        next();
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+}, async (req, res) => {
+    const results = req.session.user.results;
+
+    // Get the content-type from the first result (assuming all have the same content-type)
+    const contentType = results[0].imageData.contentType;
+
+    // Set the content-type of the response
+    res.set('Content-Type', contentType);
+   results.forEach(result => {
+    const imageDataBuffer = result.imageData.data.buffer;
+    res.write(imageDataBuffer);
+});
+
+    res.end(); // End the response
+}); 
+   */   
 app.post('/logout', (req, res) => {
     req.session.destroy();
 });

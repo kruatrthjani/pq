@@ -6,7 +6,7 @@ const db="ecom"
 const productcollection="product"
 const connection=async (con)=>{
 try{
-    const con=await mongoose.connect('abc', {});
+    const con=await mongoose.connect('abc', {}); 
    console.log("mongoose connected") 
     //const User=require("./index.js")    
     return con;       
