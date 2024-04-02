@@ -16,23 +16,34 @@ app.use(express.urlencoded({extended:true}))
 //app.post('/upload', upload.single('image'), async (req, res) => {
 app.post('/productregister',upload.single('image'),async(req,res)=>{
 try{
+  let price=req.body.price;
+  console.log(price)
+  let discount=req.body.discount;
+  console.log(discount)
+  function discountedprice(){    
+  let discounted=(price/100)*discount;
+  return discounted;
+  }
+  let ds=discountedprice()
+  console.log(ds)
     const pr_data= new ProductModel({
         imageData: {
             filename: req.file.originalname,
             contentType: req.file.mimetype,
             data: req.file.buffer,
-          },
-        name:req.body.name,
-        price:req.body.price,
-        brand:req.body.brand,
-        discount:req.body.discount,
-        discountedprice:req.body.discountedprice,
-        description:req.body.description,        
+          },        
+          name:req.body.name,
+          price:req.body.price,
+          brand:req.body.brand,          
+          discount:discount,
+          discountedprice:ds,
+          description:req.body.description,        
     });
+    console.log(pr_data)
     await pr_data.save();
     res.status(200).send('Object with image uploaded successfully');
 }
-catch(e){
+catch(e){  
     console.error('Error uploading object with image:', e);
     res.status(500).send('Error uploading object with image');
 

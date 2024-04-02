@@ -8,7 +8,7 @@ const {encrypt,decrypt}=require("./passwordcryptography.js")
 const hbs=require ("hbs")
 const con=require("./connect.js")
 const { connection, mongoose,db,collection } = require("./connect.js");
-const{DataModel,ProductModel}=require("./model.js")
+const{DataModel,ProductModel,OrderModel}=require("./model.js")
 const isStrongPassword = require('./passwordvalidate.js');
 const {mail,otptime} =require('./Mail.js')
 //const val=require('./passwordvalidate.js')
@@ -324,13 +324,96 @@ catch(e){
     console.log("error is caught",e)
 }
 });
-/*app.post("/login",async(req,res)=>{
+app.post("/buynow",async(req,res)=>{
+    try{    
+        const product={
+        pr_name:req.body.productname
+    }
 
-    const db='ecom'
-    const col='User'
-    
-    console.log(collection)
-});*/
+            let currentTime = new Date();
+            let pr_dataObj;
+            //const product_collection=ProductModel.collection();
+            const pr_data = await ProductModel.findOne({ name: product.pr_name }).select('-_id')
+            const d= new Date()
+            if(pr_data){
+            pr_dataObj = pr_data.toObject();
+            console.log(req.session.user.email)
+            pr_dataObj.email=req.session.user.email;
+            pr_dataObj.isreceived=false;
+            pr_dataObj.delivery = new Date(currentTime.getTime() + (168 * 60 * 60 * 1000));
+            console.log("here is below to insert")
+            console.log(pr_dataObj)
+            }
+            
+            const ordermodel=OrderModel.collection            
+            if(!pr_data){
+                res.status(404).send("not find")                
+            }
+            else{
+                
+                ordermodel.insertOne(pr_dataObj,(err,result)=>{
+                    if(err){
+                        console.error("Error inserting document:", err);
+                    }
+                    else{
+                        console.log("Document inserted successfully:", result);
+                    }
+                });
+                res.status(200).send("here it is"+pr_dataObj)
+            }        
+            
+        }
+    catch(e){
+        console.log("product not found",e)
+            res.status(404).send("product not found")
+    }
+
+});
+app.post("/cart",async(req,res)=>{
+try{
+    const items=req.body.products.split(",")
+    console.log(items)
+    let currentTime = new Date();
+    let pr_dataObj={};
+    let pr_data=[]
+    for(let i =0;i<items.length;i++)
+{     pr_data.push(await ProductModel.findOne({ name: items[i]}).select('-_id'))   }
+    console.log("show it here",pr_data)
+     if(pr_data){
+        //pr_dataObj = pr_data.toObject();
+        pr_dataObj.itemslist= pr_data        
+        console.log(req.session.user.email)
+        pr_dataObj.email=req.session.user.email;
+        pr_dataObj.isreceived=false;
+        pr_dataObj.delivery = new Date(currentTime.getTime() + (168 * 60 * 60 * 1000));
+        console.log("here is below to insert")
+        console.log(pr_dataObj)
+    }
+    const ordermodel=OrderModel.collection            
+            if(!pr_data){
+                res.status(404).send("not find")                
+            }
+            else{
+                
+                ordermodel.insertOne(pr_dataObj,(err,result)=>{
+                    if(err){
+                        console.error("Error inserting document:", err);
+                    }
+                    else{
+                        console.log("Document inserted successfully:", result);
+                    }
+                });
+                res.status(200).send("here it is"+pr_dataObj)
+            }        
+            
+        }
+    catch(e){
+        console.log("product not found",e)
+            res.status(404).send("product not found")
+    }
+
+});
+
 //const UserModel = mongoose.model('User', dataSchema);
 app.post("/loginidentify",async(req,res)=>{
     try{
@@ -347,6 +430,7 @@ app.post("/loginidentify",async(req,res)=>{
         let found = await decrypt(passi,hash)
         if(found){
             console.log("password matched",found)      ;   
+            req.session.user.email=data.email
             res.status(200).send("go to home page");
         }
     } catch (error) {        
@@ -354,44 +438,6 @@ app.post("/loginidentify",async(req,res)=>{
         res.status(500).send("Internal Server Error");
     }
 });
-
-app.post('/search', async (req, res, next) => {
-    let search = req.body.search;
-    req.session.user.search = search;
-
-    try {
-        const results = await ProductModel.aggregate([
-            {
-                $match: {
-                    $or: [
-                        { name: { $regex: new RegExp(search, 'i') } }
-                    ]
-                }
-            }
-        ]);                
-        console.log(results);   
-        if (!results || results.length === 0) {
-            // Handle case where no matching documents are found
-            console.log('No matching documents found');
-            return res.status(404).send('No matching documents found');
-        }
-
-        req.session.user.results = results; // Store the results in the session for later use
-        next();
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Internal Server Error');
-    }
-}, async (req, res) => {
-    const results = req.session.user.results;
-
-    const contentType = results[0].imageData.contentType;
-    const imageDataBuffers = results.map(result => result.imageData.data.buffer);
-    const combinedImageData = Buffer.concat(imageDataBuffers);
-    res.set('Content-Type', contentType);
-    res.send(combinedImageData);
-});
-
 /*
 app.post('/search', async (req, res, next) => {
     let search = req.body.search;
@@ -423,19 +469,68 @@ app.post('/search', async (req, res, next) => {
 }, async (req, res) => {
     const results = req.session.user.results;
 
-    // Get the content-type from the first result (assuming all have the same content-type)
-    const contentType = results[0].imageData.contentType;
-
-    // Set the content-type of the response
+    const contentType = results[0].imageData.contentType.data;
+    const imageDataBuffers = results.map(result => result.imageData.data.buffer);
+    const combinedImageData = Buffer.concat(imageDataBuffers);
     res.set('Content-Type', contentType);
-   results.forEach(result => {
-    const imageDataBuffer = result.imageData.data.buffer;
-    res.write(imageDataBuffer);
+    res.send(combinedImageData);
 });
+*/
+
+app.post('/search', async (req, res, next) => {
+    let search = req.body.search;
+    req.session.user.search = search;
+    console.log(search)
+    try {
+        const results = await ProductModel.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { name: { $regex: new RegExp(search, 'i') } }
+                    ]
+                }
+            }
+        ]);                
+        console.log(results);   
+        if (!results || results.length === 0) {
+            // Handle case where no matching documents are found
+            console.log('No matching documents found');
+            return res.status(404).send('No matching documents found');
+        }
+
+        req.session.user.results = results; // Store the results in the session for later use
+        next();
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+}, async (req, res) => {
+    const results = req.session.user.results;
+
+    // Assuming all results have the same content type, get it from the first result
+    if (results.length > 0 && results[0].imageData && results[0].imageData.contentType) {
+        const contentType = results[0].imageData.contentType;
+        res.set('Content-Type', contentType); // Set the content type
+    } else {
+        console.error("Content type is missing for results.");
+        return res.status(500).send("Content type is missing for results.");
+    }
+
+    // Write the response body
+    results.forEach(result => {
+        if (!result || !result.imageData || !result.imageData.data) {
+            console.error("Invalid result or imageData property missing.");
+            return; // Skip this iteration if result or imageData is missing
+        }
+        
+        var imageDataBuffer = result.imageData.data;
+        const bufferData = Buffer.from(imageDataBuffer.buffer); // Convert Binary to Buffer
+        res.write(bufferData);        
+    });
 
     res.end(); // End the response
-}); 
-   */   
+});
+
 app.post('/logout', (req, res) => {
     req.session.destroy();
 });

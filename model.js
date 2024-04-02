@@ -29,7 +29,7 @@ const productSchema = new mongoose.Schema({
         data: Buffer,
       },
     name: String,
-    price:String,
+    price:Number,
     brand:String,
     discount:Number,
     discountedprice:Number,
@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema({
   
   });
   
-
+const orderschema =new Schema({});
 exports.DataModel=mongoose.model('User',dataSchema,'User')
 exports.ProductModel=mongoose.model('Product',productSchema,'Product')
-
+exports.OrderModel=mongoose.model('Order',orderschema,'Order')
