@@ -33,8 +33,8 @@ const productSchema = new mongoose.Schema({
     brand:String,
     discount:Number,
     discountedprice:Number,
-    description: String,
-  
+    newprice:Number,
+    description: String
   });
   
 const orderschema =new Schema({});

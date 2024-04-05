@@ -5,6 +5,7 @@ const fs= require('fs')
 const path= require('path')
 const con=require("./connect.js")
 const { ProductModel } = require('./model.js')
+const { deepStrictEqual } = require('assert')
 const port=3000
 const app = express()
 const uploadDir = path.join(__dirname, 'public/images');
@@ -25,7 +26,13 @@ try{
   return discounted;
   }
   let ds=discountedprice()
+  function newprice(){
+    let newprice=price-ds;
+    return newprice;
+  }
+  let nw=newprice()
   console.log(ds)
+  console.log(nw)
     const pr_data= new ProductModel({
         imageData: {
             filename: req.file.originalname,
@@ -37,7 +44,8 @@ try{
           brand:req.body.brand,          
           discount:discount,
           discountedprice:ds,
-          description:req.body.description,        
+          newprice:nw,
+          description:req.body.description
     });
     console.log(pr_data)
     await pr_data.save();
@@ -49,9 +57,57 @@ catch(e){
 
 }
 })
+app.post("/productdelete",async(req,res)=>{
+  const pr_name={
+    name:req.body.name
+  }
+  ProductModel.deleteOne(pr_name)
+  .then(deletedProduct => {
+    if (deletedProduct.deletedCount > 0) {
+      console.log('Product deleted successfully:', deletedProduct);
+      res.status(200).send("deleted");
+    } else {
+      console.log('Product not found:', pr_name);
+      res.status(404).send("Product not found");
+    }
+  })
+  .catch(err => {
+    console.error('Error deleting product:', err);
+    res.status(500).send("Error deleting product");
+  });
 
-
+  });
 // Serve uploaded images statically
+app.post('/productupdate',async(req,res)=>{
+  try{
+    
+    let name=req.body.name
+    let price=req.body.price
+    let discount=req.body.discount
+        
+    function discountedprice(){    
+    let discounted=(price/100)*discount;
+    return discounted;
+    }
+    let ds=discountedprice()
+    function newprice(){
+      let newprice=price-ds;
+      return newprice;
+    }
+    let nw=newprice()
+    console.log(ds)
+    console.log(nw)
+    discountedprice=ds;
+    newprice=nw;
+    ProductModel.updateOne({ name :name },{ $set: { price : price ,discount:discount,discountedprice:ds,newprice:nw} })          
+    res.status(200).send("updated successfully")
+  }
+  catch(e){  
+      console.error('Error updating object :', e);
+      res.status(500).send('Error updating object ');
+  
+  }
+})
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Route to retrieve all products with associated image data

@@ -376,16 +376,28 @@ try{
     let currentTime = new Date();
     let pr_dataObj={};
     let pr_data=[]
-    for(let i =0;i<items.length;i++)
-{     pr_data.push(await ProductModel.findOne({ name: items[i]}).select('-_id'))   }
+    let amount=0
+    for (let i = 0; i < items.length; i++) {
+    const product = await ProductModel.findOne({ name: items[i] }).select('-_id');
+    if (product) {
+        pr_data.push(product);
+        amount += product.newprice;
+    } else {
+        // Handle the case where the product with the given name is not found
+        console.error(`Product not found for name: ${items[i]}`);
+    }
+}
     console.log("show it here",pr_data)
+    console.log("amount",amount)
      if(pr_data){
         //pr_dataObj = pr_data.toObject();
         pr_dataObj.itemslist= pr_data        
+        
         console.log(req.session.user.email)
         pr_dataObj.email=req.session.user.email;
         pr_dataObj.isreceived=false;
         pr_dataObj.delivery = new Date(currentTime.getTime() + (168 * 60 * 60 * 1000));
+        pr_dataObj.amount=amount;
         console.log("here is below to insert")
         console.log(pr_dataObj)
     }
