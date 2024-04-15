@@ -11,14 +11,16 @@ const { connection, mongoose,db,collection } = require("./connect.js");
 const{DataModel,ProductModel,OrderModel}=require("./model.js")
 const isStrongPassword = require('./passwordvalidate.js');
 const {mail,otptime} =require('./Mail.js')
+const {pay} =require('./apps.js')
 //const val=require('./passwordvalidate.js')
 const app=express()
-const port=3000;
+const port =process.env.PORT ||3000;
 console.log("show=",isStrongPassword.constructor===Function)
 app.use(express.json())
 app.set("view engine","hbs")
+
+
 //app.set('views', path.join(__dirname, 'views'));
-app.use(express.urlencoded({extended:true}))
 
 //const uri = 'mongodb://localhost:27017';
 /*mongoose.connect('mongodb://localhost:27017/test_db')
@@ -62,6 +64,7 @@ catch(e){
 const DataModel = mongoose.model('User', dataSchema,'User');*/
 //module.exports=mongoose.model('User', dataSchema);
 //const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
@@ -74,9 +77,9 @@ app.use(session({
     }
     next();
   });
-  
+
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/views/signup.html');
+    res.sendFile(__dirname + '/public/index.html');
 });
      /*   try{
             const passarr=data.password;
@@ -340,6 +343,7 @@ app.post("/buynow",async(req,res)=>{
             console.log(req.session.user.email)
             pr_dataObj.email=req.session.user.email;
             pr_dataObj.isreceived=false;
+            pr_dataObj.paid=false;
             pr_dataObj.delivery = new Date(currentTime.getTime() + (168 * 60 * 60 * 1000));
             console.log("here is below to insert")
             console.log(pr_dataObj)
@@ -437,6 +441,7 @@ app.post("/loginidentify",async(req,res)=>{
         delete data.password;        
         console.log(collection)
         const user = await DataModel.findOne({ email: data.email })
+        console.log(user)
         const hash = user.password;
         console.log("hashed from database=",hash)
         let found = await decrypt(passi,hash)
@@ -542,9 +547,30 @@ app.post('/search', async (req, res, next) => {
 
     res.end(); // End the response
 });
+app.post('/payments', async (req, res) => {
+    const email = req.session.user.email;
+    console.log(email);
+
+    const order = await OrderModel.findOne({ email: email }).select("newprice");
+    if (order) {
+        console.log("order", order);
+        if (order.newprice) {
+            console.log("order new price", order.newprice);
+            const newPrice = order.newprice;
+            console.log("New Price:", newPrice);
+            // Call the pay function with the email and newPrice
+            pay(email, newPrice);
+        } else {
+            console.log("New price not found in order.");
+        }
+    } else {
+        console.log("No order found for the specified email.");
+    }    
+});
 
 app.post('/logout', (req, res) => {
     req.session.destroy();
+    res.status(200).send('successfully logged out')
 });
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);

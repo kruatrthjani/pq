@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Form</title>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="container">
+    <h1> welcome to simple payment page</h1>
+  <h1>Payment Form</h1>
+  <!-- Your payment form here -->
+  <form id="payment-form">
+    <!-- Payment form fields here -->
+    <div id="card-element"></div>
+    <div id="card-errors" role="alert"></div>
+    <button id="submit-button" type="submit">Pay</button>
+  </form>
+  </div>
+  <div id="toks"></div>
+  <script>
+    var stripe = Stripe('pk_test_51P15i4SGXDPzpYYjEAuZjuSX7aAwG5JLSvj1hy0b9yiuLfVzYKiOAgPmCJM2ppH2bEf76sj1lksW7F8oMxrePdeB00Nfd5NrxX');
+var elements = stripe.elements();
+var card = elements.create('card');
+card.mount('#card-element');
+
+function createTokenAndHandleResult() {
+  return stripe.createToken(cardElement).then(function(result) {
+    if (result.error) {
+      console.error(result.error.message);
+    } else {          
+      console.log('Token:', result.token);
+      document.getElementById("toks").textContent = result.token.id;
+      return result.token;
+    }        
+  });
+}
+
+var form = document.getElementById('payment-form');
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+ stripe.createPaymentMethod({
+    type:'card',
+    card:card
+ }).then(function(result){
+  if(result.error){
+    var errorElement =document.getElementbyId('card-errors')
+    errorElement.textContent=result.error.message;
+  }else{
+    fetch('/create-payment-intent',{
+      method:'POST',
+      headers:{
+        'Content-type':'application/json'
+      },
+      body:JSON.stringify({paymentMethodId:result.paymentMethod.id})
+    }).then(function(response){
+      if(!response.ok){
+        throw new Error('Netwrok respond was not ok:'+response.statusText)
+      }
+      return response.text()
+    }).then(function(text){
+      const data=text? JSON.parse(text):{};
+      if(data.error){
+        var errorElement = document.getElementById('card-errors')
+        errorElement.textContent =data.error;
+      }
+      else{
+        alert('payment is succeded')
+      }
+    }).catch(function(error){
+      console.error('Error:',error);
+      var errorElement=document.getElementbyId('card-errors')
+      errorElement.textContent=error.message
+    });
+  }
+ })
+});
+
+  </script>
+</body>
+</html>
