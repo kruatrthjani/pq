@@ -550,19 +550,17 @@ app.post('/search', async (req, res, next) => {
 app.post('/payments', async (req, res) => {
     const email = req.session.user.email;
     console.log(email);
-
+    let temp_ord={};
     const order = await OrderModel.findOne({ email: email }).select("newprice");
     if (order) {
-        console.log("order", order);
-        if (order.newprice) {
-            console.log("order new price", order.newprice);
-            const newPrice = order.newprice;
-            console.log("New Price:", newPrice);
-            // Call the pay function with the email and newPrice
-            pay(email, newPrice);
-        } else {
-            console.log("New price not found in order.");
-        }
+        console.log("order", order);        
+        temp_ord=order.toObject();
+            console.log("order new price", temp_ord);
+            console.log(temp_ord.newprice)
+            const newPrice = await Number(temp_ord.newprice);
+            console.log("New Price:", newPrice);            
+            await pay(email, newPrice);
+        
     } else {
         console.log("No order found for the specified email.");
     }    

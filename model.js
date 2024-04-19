@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema({
     description: String
   });
   
-const orderschema =new Schema({});
+const orderschema =new Schema({},{ strict: false });
 exports.DataModel=mongoose.model('User',dataSchema,'User')
 exports.ProductModel=mongoose.model('Product',productSchema,'Product')
 exports.OrderModel=mongoose.model('Order',orderschema,'Order')
