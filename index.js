@@ -17,7 +17,7 @@ const app=express()
 const port =process.env.PORT ||3000;
 console.log("show=",isStrongPassword.constructor===Function)
 app.use(express.json())
-app.set("view engine","hbs")
+app.set('view engine','hbs')
 
 
 //app.set('views', path.join(__dirname, 'views'));
@@ -79,7 +79,8 @@ app.use(session({
   });
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    //res.sendFile(__dirname + '/public/signup.hbs');
+    
 });
      /*   try{
             const passarr=data.password;
@@ -89,7 +90,10 @@ app.get('/', (req, res) => {
         catch(e){
             console.log(e)            
         }*/
-
+app.use(express.static('views'));
+app.get("/submit",(req,res)=>{    
+    res.render("signup")
+});
 app.post("/submit", async(req, res) => {
     const data={
       name:req.body.name,
@@ -165,9 +169,7 @@ app.post("/submit", async(req, res) => {
                 console.log("Document inserted successfully:", result);
                 // Document inserted successfully, continue with your logic
             }
-        });
-        
-        res.render("home");
+        });        
     } 
     catch (error) {
         console.error("Error saving data to MongoDB:", error);
@@ -429,7 +431,10 @@ try{
     }
 
 });
-
+app.get("/loginidentify",(req,res)=>{
+    app.use(express.static('views'));
+    res.render("login")
+});
 //const UserModel = mongoose.model('User', dataSchema);
 app.post("/loginidentify",async(req,res)=>{
     try{

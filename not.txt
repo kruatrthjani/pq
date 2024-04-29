@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>JavaScript Strings</h1>
+<h2>The match() Method</h2>
+
+<p>match() searches for a match in a string.</p>
+
+<p>Do a search for "ain":</p>
+
+<p id="demo"></p>
+<p id="demo2"></p>
+<p id="demo3"></p>
+<p id="demo4"></p>
+
+<script>
+let text = "The  in SPAN stays manly in the plan";
+let te=/ain/gi;
+let result = text.match(te);
+ if(result)
+ {
+		 document.getElementById("demo2").innerHTML = 'it has'; 
+ }
+ else{
+ document.getElementById("demo3").innerHTML = 'it hasnt';
+ document.getElementById("demo4").innerHTML = typeof(result);
+ }
+document.getElementById("demo").innerHTML = result;
+</script>
+
+</body>
+</html>
